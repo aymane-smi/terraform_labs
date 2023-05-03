@@ -27,10 +27,10 @@ resource "aws_route_table" "route_table" {
     gateway_id = aws_internet_gateway.gateway.id
   }
 
-  route {
-    ipv6_cidr_block        = "::/0"
-    egress_only_gateway_id = aws_internet_gateway.gateway.id
-  }
+  # route {
+  #   ipv6_cidr_block        = "::/0"
+  #   egress_only_gateway_id = aws_internet_gateway.gateway.id
+  # }
 
   tags = {
     Name = "example"
@@ -103,7 +103,7 @@ resource "aws_security_group" "security" {
 #create a network interface
 resource "aws_network_interface" "net" {
   subnet_id       = aws_subnet.subnet_1.id
-  private_ips     = ["10.0.0.50"]
+  private_ips     = ["10.0.1.50"]
   security_groups = [aws_security_group.security.id]
 }
 
@@ -112,7 +112,7 @@ resource "aws_network_interface" "net" {
 resource "aws_eip" "one" {
   vpc                       = true
   network_interface         = aws_network_interface.net.id
-  associate_with_private_ip = "10.0.0.50"
+  associate_with_private_ip = "10.0.1.50"
   depends_on                = [aws_internet_gateway.gateway]
 }
 
@@ -125,10 +125,17 @@ resource "aws_instance" "ubuntu" {
     device_index         = 0
     network_interface_id = aws_network_interface.net.id
   }
-  subnet_id = aws_subnet.subnet_1.id
   user_data = <<-EOF
                 #!/bin/bash
                 sudo apt update -y
                 sudo apt install apache2 -y
                 EOF
+}
+
+
+#creating an output thta show the public ipv4 address
+#when using terraform apply
+
+output "public_ip" {
+  value = aws_eip.one.public_ip
 }
